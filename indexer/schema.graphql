@@ -1,4 +1,4 @@
-type Participant @entity {
+type Participant @entity(immutable: false) {
   id: ID!
   controller: Bytes!
   metadataHash: Bytes!
@@ -20,7 +20,7 @@ type PassportEvent @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type Obligation @entity {
+type Obligation @entity(immutable: false) {
   id: ID!
   issuerPassportId: BigInt!
   beneficiaryPassportId: BigInt!
@@ -60,7 +60,7 @@ type ObligationEvent @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type QualityDimension @entity {
+type QualityDimension @entity(immutable: false) {
   id: ID!
   obligationId: BigInt!
   qualityKey: Bytes!
@@ -91,7 +91,7 @@ type QualityObservationEvent @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type QualityClaim @entity {
+type QualityClaim @entity(immutable: false) {
   id: ID!
   obligationId: BigInt!
   qualityKey: Bytes!
@@ -105,7 +105,7 @@ type QualityClaim @entity {
   resolved: Boolean!
 }
 
-type QualityStakeSummary @entity {
+type QualityStakeSummary @entity(immutable: false) {
   id: ID!
   claimId: Bytes!
   collateralToken: Bytes!
@@ -114,7 +114,7 @@ type QualityStakeSummary @entity {
   updatedAtBlock: BigInt!
 }
 
-type ObligationLock @entity {
+type ObligationLock @entity(immutable: false) {
   id: ID!
   obligationId: BigInt!
   settlementId: Bytes!
@@ -135,7 +135,7 @@ type BilateralSettlement @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type SettlementInstruction @entity {
+type SettlementInstruction @entity(immutable: false) {
   id: ID!
   settlementId: Bytes!
   payerPassportId: BigInt!
