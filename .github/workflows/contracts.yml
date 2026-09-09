@@ -31,6 +31,8 @@ jobs:
       - name: Apply canonical forge formatting
         if: github.event_name == 'pull_request'
         run: |
+          # Foundry 1.8.1 can require a second formatting pass for a dangling single-line if body.
+          forge fmt
           forge fmt
           if ! git diff --quiet -- src test script; then
             git config user.name "orbitas-ci"
