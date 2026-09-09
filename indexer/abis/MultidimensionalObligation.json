@@ -1,0 +1,380 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "issuerPassportId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "beneficiaryPassportId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "externalCounterpartyHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "resourceType",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "resourceCode",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "unitCode",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "currencyCode",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "totalQuantity",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "decimals",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "dueDate",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "name": "sourceRefHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "evidenceHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "propertiesHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "metadataHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "qualitySchemaHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "metadataURI",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "name": "propertiesURI",
+        "type": "string"
+      }
+    ],
+    "name": "ObligationIssued",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "settlementId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "quantity",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "expiresAt",
+        "type": "uint64"
+      }
+    ],
+    "name": "ObligationLocked",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "settlementId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "quantity",
+        "type": "uint256"
+      }
+    ],
+    "name": "ObligationLockReleased",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "settlementId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "quantity",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "remainingQuantity",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "fulfillmentEvidenceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "ObligationSettled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "cancelledQuantity",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "settledQuantity",
+        "type": "uint256"
+      }
+    ],
+    "name": "ObligationCancelled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "qualityKey",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "encodedValue",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "decimals",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "sourceType",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "evidenceHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "observedAt",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "name": "validUntil",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "name": "observationCount",
+        "type": "uint32"
+      },
+      {
+        "indexed": false,
+        "name": "confidencePpm",
+        "type": "uint32"
+      }
+    ],
+    "name": "QualityObservationRecorded",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "claimId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "name": "obligationId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "qualityKey",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "operator",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "threshold",
+        "type": "int256"
+      },
+      {
+        "indexed": false,
+        "name": "decimals",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "contextHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "validUntil",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "name": "evidenceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "QualityClaimCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "claimId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "resolution",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "name": "evidenceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "QualityClaimResolved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "name": "claimId",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "name": "stakerPassportId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "name": "collateralToken",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "name": "side",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "name": "amount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newForAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "newAgainstAmount",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "name": "sourceRegistry",
+        "type": "address"
+      }
+    ],
+    "name": "QualityStakeSignalChanged",
+    "type": "event"
+  }
+]

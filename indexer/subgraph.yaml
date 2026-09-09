@@ -1,0 +1,106 @@
+specVersion: 1.3.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum/contract
+    name: ParticipantPassport
+    network: ${NETWORK}
+    source:
+      address: "${PASSPORT_ADDRESS}"
+      abi: ParticipantPassport
+      startBlock: ${PASSPORT_START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities: [Participant, PassportEvent]
+      abis:
+        - name: ParticipantPassport
+          file: ./abis/ParticipantPassport.json
+      eventHandlers:
+        - event: PassportRegistered(indexed uint256,indexed address,bytes32,string)
+          handler: handlePassportRegistered
+        - event: PassportMetadataUpdated(indexed uint256,bytes32,bytes32,string)
+          handler: handlePassportMetadataUpdated
+        - event: PassportControllerChanged(indexed uint256,indexed address,indexed address)
+          handler: handlePassportControllerChanged
+        - event: PassportDeactivated(indexed uint256)
+          handler: handlePassportDeactivated
+      file: ./src/passport.ts
+  - kind: ethereum/contract
+    name: MultidimensionalObligation
+    network: ${NETWORK}
+    source:
+      address: "${OBLIGATION_ADDRESS}"
+      abi: MultidimensionalObligation
+      startBlock: ${OBLIGATION_START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities: [Obligation, ObligationEvent, QualityDimension, QualityObservationEvent, QualityClaim, QualityStakeSummary, ObligationLock]
+      abis:
+        - name: MultidimensionalObligation
+          file: ./abis/MultidimensionalObligation.json
+      eventHandlers:
+        - event: ObligationIssued(indexed uint256,indexed uint256,indexed uint256,bytes32,uint8,bytes32,bytes32,bytes32,uint256,uint8,uint64,bytes32,bytes32,bytes32,bytes32,bytes32,string,string)
+          handler: handleObligationIssued
+        - event: ObligationLocked(indexed uint256,indexed bytes32,uint256,uint64)
+          handler: handleObligationLocked
+        - event: ObligationLockReleased(indexed uint256,indexed bytes32,uint256)
+          handler: handleObligationLockReleased
+        - event: ObligationSettled(indexed uint256,indexed bytes32,uint256,uint256,bytes32)
+          handler: handleObligationSettled
+        - event: ObligationCancelled(indexed uint256,uint256,uint256)
+          handler: handleObligationCancelled
+        - event: QualityObservationRecorded(indexed uint256,indexed bytes32,bytes32,uint8,bytes32,bytes32,uint64,uint64,uint32,uint32)
+          handler: handleQualityObservationRecorded
+        - event: QualityClaimCreated(indexed bytes32,indexed uint256,indexed bytes32,uint8,int256,uint8,bytes32,uint64,bytes32)
+          handler: handleQualityClaimCreated
+        - event: QualityClaimResolved(indexed bytes32,bytes32,bytes32)
+          handler: handleQualityClaimResolved
+        - event: QualityStakeSignalChanged(indexed bytes32,indexed uint256,indexed address,uint8,uint256,uint256,uint256,address)
+          handler: handleQualityStakeSignalChanged
+      file: ./src/obligation.ts
+  - kind: ethereum/contract
+    name: BilateralExchange
+    network: ${NETWORK}
+    source:
+      address: "${BILATERAL_ADDRESS}"
+      abi: BilateralExchange
+      startBlock: ${BILATERAL_START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities: [BilateralSettlement]
+      abis:
+        - name: BilateralExchange
+          file: ./abis/BilateralExchange.json
+      eventHandlers:
+        - event: BilateralExchangeSettled(indexed bytes32,indexed uint256,indexed uint256,uint256,uint256,uint256)
+          handler: handleBilateralExchangeSettled
+      file: ./src/bilateral.ts
+  - kind: ethereum/contract
+    name: MultilateralClearing
+    network: ${NETWORK}
+    source:
+      address: "${MULTILATERAL_ADDRESS}"
+      abi: MultilateralClearing
+      startBlock: ${MULTILATERAL_START_BLOCK}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities: [SettlementInstruction]
+      abis:
+        - name: MultilateralClearing
+          file: ./abis/MultilateralClearing.json
+      eventHandlers:
+        - event: SettlementInstructionCreated(indexed bytes32,indexed uint256,indexed uint256,uint256,uint256,uint256,uint256,uint64,uint64,bytes32)
+          handler: handleSettlementInstructionCreated
+        - event: SettlementInstructionStatusChanged(indexed bytes32,uint8,bytes32)
+          handler: handleSettlementInstructionStatusChanged
+      file: ./src/multilateral.ts
