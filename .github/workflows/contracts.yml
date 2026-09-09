@@ -1,0 +1,26 @@
+name: contracts
+on:
+  pull_request:
+    paths: ["src/**", "test/**", "script/**", "foundry.toml", "remappings.txt"]
+  push:
+    branches: [main]
+    paths: ["src/**", "test/**", "script/**", "foundry.toml", "remappings.txt"]
+
+permissions:
+  contents: read
+
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - name: Install pinned dependencies
+        run: |
+          forge install OpenZeppelin/openzeppelin-contracts@v5.6.1 --no-git
+          forge install foundry-rs/forge-std@v1.16.1 --no-git
+      - run: forge fmt --check
+      - run: FOUNDRY_PROFILE=ci forge build --sizes
+      - run: FOUNDRY_PROFILE=ci forge test -vvv
