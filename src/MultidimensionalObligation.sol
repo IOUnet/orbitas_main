@@ -240,7 +240,9 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         }
         if (input.quantity == 0) revert InvalidQuantity();
         if (input.sourceRefHash == bytes32(0) || input.evidenceHash == bytes32(0) || input.propertiesHash == bytes32(0))
-        revert InvalidEvidence();
+        {
+            revert InvalidEvidence();
+        }
         if (input.beneficiaryPassportId == 0 && input.externalCounterpartyHash == bytes32(0)) {
             revert InvalidCounterparty();
         }
