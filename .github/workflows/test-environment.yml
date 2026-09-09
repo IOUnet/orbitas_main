@@ -1,0 +1,53 @@
+name: test-environment
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'script/**'
+      - 'indexer/**'
+      - 'scripts/test-env/**'
+      - 'docker-compose.test.yml'
+      - 'Makefile'
+      - '.codex/**'
+      - '.github/workflows/test-environment.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-sandbox:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install test environment tools
+        run: sudo apt-get update && sudo apt-get install -y gettext-base jq
+
+      - name: Build Orbitas local sandbox
+        run: make test-env
+
+      - name: Run protocol tests
+        run: make test-contracts
+
+      - name: Build MCP server
+        run: make test-mcp
+
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.test.yml logs --no-color --tail=300
+
+      - name: Stop sandbox
+        if: always()
+        run: bash scripts/test-env/down.sh -v || true
