@@ -1,0 +1,57 @@
+name: Materialize Orbitas bootstrap
+
+on:
+  push:
+    branches: [bootstrap]
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message, '[materialized]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct staged archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in 00 01 02 03 04 05 06 07 08; do
+            test -s "bootstrap/chunk-${i}.b64"
+          done
+          cat bootstrap/chunk-{00..08}.b64 > /tmp/orbitas-bootstrap.b64
+          base64 --decode /tmp/orbitas-bootstrap.b64 > /tmp/orbitas-bootstrap.zip
+          unzip -t /tmp/orbitas-bootstrap.zip >/dev/null
+          rm -rf /tmp/orbitas-bootstrap
+          mkdir -p /tmp/orbitas-bootstrap
+          unzip -q /tmp/orbitas-bootstrap.zip -d /tmp/orbitas-bootstrap
+          test -f /tmp/orbitas-bootstrap/orbitas_main/AGENTS.md
+          test -f /tmp/orbitas-bootstrap/orbitas_main/src/MultidimensionalObligation.sol
+          test -f /tmp/orbitas-bootstrap/orbitas_main/indexer/subgraph.yaml
+
+      - name: Materialize repository tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rsync -a /tmp/orbitas-bootstrap/orbitas_main/ ./
+          rm -rf bootstrap
+          rm -f .github/workflows/bootstrap-unpack.yml
+          git status --short
+
+      - name: Commit materialized bootstrap
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "orbitas-bootstrap-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No materialization changes"
+            exit 0
+          fi
+          git commit -m "chore: materialize Orbitas bootstrap [materialized]"
+          git push origin HEAD:bootstrap
