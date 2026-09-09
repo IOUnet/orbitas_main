@@ -47,9 +47,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rsync -a /tmp/orbitas-bootstrap/orbitas_main/ ./
+          # The default GITHUB_TOKEN cannot create/update workflow files in this repository.
+          # Materialize everything else first; workflow files are added later by the authorized GitHub connector.
+          rsync -a --exclude='.github/workflows/' /tmp/orbitas-bootstrap/orbitas_main/ ./
           rm -rf bootstrap
-          rm -f .github/workflows/bootstrap-unpack.yml
           git status --short
 
       - name: Commit materialized bootstrap
