@@ -9,7 +9,11 @@ import {Pausable} from "@openzeppelin/contracts/utils/Pausable.sol";
 contract ParticipantPassport is AccessControl, Pausable {
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
-    enum PassportStatus { NONE, ACTIVE, DEACTIVATED }
+    enum PassportStatus {
+        NONE,
+        ACTIVE,
+        DEACTIVATED
+    }
 
     struct Passport {
         address controller;
@@ -37,10 +41,16 @@ contract ParticipantPassport is AccessControl, Pausable {
     mapping(address => uint256) private _passportOfController;
     mapping(uint256 => mapping(address => OperatorGrant)) private _operatorGrants;
 
-    event PassportRegistered(uint256 indexed passportId, address indexed controller, bytes32 metadataHash, string metadataURI);
+    event PassportRegistered(
+        uint256 indexed passportId, address indexed controller, bytes32 metadataHash, string metadataURI
+    );
     event PassportMetadataUpdated(uint256 indexed passportId, bytes32 oldHash, bytes32 newHash, string newURI);
-    event PassportControllerChanged(uint256 indexed passportId, address indexed oldController, address indexed newController);
-    event PassportOperatorPermissionsChanged(uint256 indexed passportId, address indexed operator, uint256 permissions, uint64 epoch);
+    event PassportControllerChanged(
+        uint256 indexed passportId, address indexed oldController, address indexed newController
+    );
+    event PassportOperatorPermissionsChanged(
+        uint256 indexed passportId, address indexed operator, uint256 permissions, uint64 epoch
+    );
     event PassportDeactivated(uint256 indexed passportId);
 
     constructor(address admin) {
@@ -50,7 +60,11 @@ contract ParticipantPassport is AccessControl, Pausable {
     }
 
     /// @notice Self-register a participant passport. Profile verification level is SELF_DECLARED off-chain metadata.
-    function registerPassport(bytes32 metadataHash, string calldata metadataURI) external whenNotPaused returns (uint256 passportId) {
+    function registerPassport(bytes32 metadataHash, string calldata metadataURI)
+        external
+        whenNotPaused
+        returns (uint256 passportId)
+    {
         if (metadataHash == bytes32(0) || bytes(metadataURI).length == 0) revert EmptyMetadata();
         if (_passportOfController[msg.sender] != 0) revert ControllerAlreadyRegistered(msg.sender);
 
@@ -69,7 +83,10 @@ contract ParticipantPassport is AccessControl, Pausable {
         emit PassportRegistered(passportId, msg.sender, metadataHash, metadataURI);
     }
 
-    function updateMetadata(uint256 passportId, bytes32 metadataHash, string calldata metadataURI) external whenNotPaused {
+    function updateMetadata(uint256 passportId, bytes32 metadataHash, string calldata metadataURI)
+        external
+        whenNotPaused
+    {
         Passport storage p = _requireController(passportId);
         if (metadataHash == bytes32(0) || bytes(metadataURI).length == 0) revert EmptyMetadata();
         bytes32 oldHash = p.metadataHash;
@@ -108,7 +125,9 @@ contract ParticipantPassport is AccessControl, Pausable {
         emit PassportDeactivated(passportId);
     }
 
-    function passportOf(address controller) external view returns (uint256) { return _passportOfController[controller]; }
+    function passportOf(address controller) external view returns (uint256) {
+        return _passportOfController[controller];
+    }
 
     function isActive(uint256 passportId) public view returns (bool) {
         return _passports[passportId].status == PassportStatus.ACTIVE;
@@ -122,16 +141,30 @@ contract ParticipantPassport is AccessControl, Pausable {
         return g.epoch == p.operatorEpoch && (g.permissions & permission) == permission;
     }
 
-    function getPassport(uint256 passportId) external view returns (
-        address controller, bytes32 metadataHash, string memory metadataURI, PassportStatus status,
-        uint64 createdAt, uint64 updatedAt, uint64 operatorEpoch
-    ) {
+    function getPassport(uint256 passportId)
+        external
+        view
+        returns (
+            address controller,
+            bytes32 metadataHash,
+            string memory metadataURI,
+            PassportStatus status,
+            uint64 createdAt,
+            uint64 updatedAt,
+            uint64 operatorEpoch
+        )
+    {
         Passport storage p = _passports[passportId];
         return (p.controller, p.metadataHash, p.metadataURI, p.status, p.createdAt, p.updatedAt, p.operatorEpoch);
     }
 
-    function pause() external onlyRole(PAUSER_ROLE) { _pause(); }
-    function unpause() external onlyRole(PAUSER_ROLE) { _unpause(); }
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function _requireController(uint256 passportId) private view returns (Passport storage p) {
         p = _passports[passportId];

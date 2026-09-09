@@ -15,11 +15,35 @@ contract MultidimensionalObligation is AccessControl, Pausable {
     bytes32 public constant QUALITY_ATTESTOR_ROLE = keccak256("QUALITY_ATTESTOR_ROLE");
     bytes32 public constant GUARANTEE_REGISTRY_ROLE = keccak256("GUARANTEE_REGISTRY_ROLE");
 
-    enum ResourceType { MONETARY, GOODS, SERVICE }
-    enum ObligationStatus { NONE, ACTIVE, SETTLED, CANCELLED }
-    enum QualityValueType { UINT, INT, BOOL, ENUM_HASH }
-    enum ComparisonOperator { EQ, NE, GT, GTE, LT, LTE }
-    enum StakeSide { FOR, AGAINST }
+    enum ResourceType {
+        MONETARY,
+        GOODS,
+        SERVICE
+    }
+    enum ObligationStatus {
+        NONE,
+        ACTIVE,
+        SETTLED,
+        CANCELLED
+    }
+    enum QualityValueType {
+        UINT,
+        INT,
+        BOOL,
+        ENUM_HASH
+    }
+    enum ComparisonOperator {
+        EQ,
+        NE,
+        GT,
+        GTE,
+        LT,
+        LTE
+    }
+    enum StakeSide {
+        FOR,
+        AGAINST
+    }
 
     struct Obligation {
         uint256 issuerPassportId;
@@ -150,15 +174,53 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         string metadataURI,
         string propertiesURI
     );
-    event ObligationLocked(uint256 indexed obligationId, bytes32 indexed settlementId, uint256 quantity, uint64 expiresAt);
+    event ObligationLocked(
+        uint256 indexed obligationId, bytes32 indexed settlementId, uint256 quantity, uint64 expiresAt
+    );
     event ObligationLockReleased(uint256 indexed obligationId, bytes32 indexed settlementId, uint256 quantity);
-    event ObligationSettled(uint256 indexed obligationId, bytes32 indexed settlementId, uint256 quantity, uint256 remainingQuantity, bytes32 fulfillmentEvidenceHash);
+    event ObligationSettled(
+        uint256 indexed obligationId,
+        bytes32 indexed settlementId,
+        uint256 quantity,
+        uint256 remainingQuantity,
+        bytes32 fulfillmentEvidenceHash
+    );
     event ObligationCancelled(uint256 indexed obligationId, uint256 cancelledQuantity, uint256 settledQuantity);
     event ObligationMetadataUpdated(uint256 indexed obligationId, bytes32 oldHash, bytes32 newHash, string newURI);
-    event QualityObservationRecorded(uint256 indexed obligationId, bytes32 indexed qualityKey, bytes32 encodedValue, uint8 decimals, bytes32 sourceType, bytes32 evidenceHash, uint64 observedAt, uint64 validUntil, uint32 observationCount, uint32 confidencePpm);
-    event QualityClaimCreated(bytes32 indexed claimId, uint256 indexed obligationId, bytes32 indexed qualityKey, ComparisonOperator operator, int256 threshold, uint8 decimals, bytes32 contextHash, uint64 validUntil, bytes32 evidenceHash);
+    event QualityObservationRecorded(
+        uint256 indexed obligationId,
+        bytes32 indexed qualityKey,
+        bytes32 encodedValue,
+        uint8 decimals,
+        bytes32 sourceType,
+        bytes32 evidenceHash,
+        uint64 observedAt,
+        uint64 validUntil,
+        uint32 observationCount,
+        uint32 confidencePpm
+    );
+    event QualityClaimCreated(
+        bytes32 indexed claimId,
+        uint256 indexed obligationId,
+        bytes32 indexed qualityKey,
+        ComparisonOperator operator,
+        int256 threshold,
+        uint8 decimals,
+        bytes32 contextHash,
+        uint64 validUntil,
+        bytes32 evidenceHash
+    );
     event QualityClaimResolved(bytes32 indexed claimId, bytes32 resolution, bytes32 evidenceHash);
-    event QualityStakeSignalChanged(bytes32 indexed claimId, uint256 indexed stakerPassportId, address indexed collateralToken, StakeSide side, uint256 amount, uint256 newForAmount, uint256 newAgainstAmount, address sourceRegistry);
+    event QualityStakeSignalChanged(
+        bytes32 indexed claimId,
+        uint256 indexed stakerPassportId,
+        address indexed collateralToken,
+        StakeSide side,
+        uint256 amount,
+        uint256 newForAmount,
+        uint256 newAgainstAmount,
+        address sourceRegistry
+    );
 
     constructor(address passportRegistry_, address admin) {
         if (passportRegistry_ == address(0) || admin == address(0)) revert ZeroAddress();
@@ -168,13 +230,23 @@ contract MultidimensionalObligation is AccessControl, Pausable {
     }
 
     function issueObligation(IssueInput calldata input) external whenNotPaused returns (uint256 obligationId) {
-        if (!passportRegistry.isActive(input.issuerPassportId) || !passportRegistry.isAuthorized(input.issuerPassportId, msg.sender, OrbitasPermissions.ISSUE_OBLIGATION)) {
+        if (
+            !passportRegistry.isActive(input.issuerPassportId)
+                || !passportRegistry.isAuthorized(
+                    input.issuerPassportId, msg.sender, OrbitasPermissions.ISSUE_OBLIGATION
+                )
+        ) {
             revert UnauthorizedParticipant(input.issuerPassportId, msg.sender, OrbitasPermissions.ISSUE_OBLIGATION);
         }
         if (input.quantity == 0) revert InvalidQuantity();
-        if (input.sourceRefHash == bytes32(0) || input.evidenceHash == bytes32(0) || input.propertiesHash == bytes32(0)) revert InvalidEvidence();
-        if (input.beneficiaryPassportId == 0 && input.externalCounterpartyHash == bytes32(0)) revert InvalidCounterparty();
-        if (input.beneficiaryPassportId != 0 && !passportRegistry.isActive(input.beneficiaryPassportId)) revert InvalidCounterparty();
+        if (input.sourceRefHash == bytes32(0) || input.evidenceHash == bytes32(0) || input.propertiesHash == bytes32(0))
+        revert InvalidEvidence();
+        if (input.beneficiaryPassportId == 0 && input.externalCounterpartyHash == bytes32(0)) {
+            revert InvalidCounterparty();
+        }
+        if (input.beneficiaryPassportId != 0 && !passportRegistry.isActive(input.beneficiaryPassportId)) {
+            revert InvalidCounterparty();
+        }
         uint256 existing = obligationBySourceRef[input.sourceRefHash];
         if (existing != 0) revert DuplicateSourceRef(input.sourceRefHash, existing);
 
@@ -203,13 +275,39 @@ contract MultidimensionalObligation is AccessControl, Pausable {
             createdAt: uint64(block.timestamp)
         });
         obligationBySourceRef[input.sourceRefHash] = obligationId;
-        emit ObligationIssued(obligationId, input.issuerPassportId, input.beneficiaryPassportId, input.externalCounterpartyHash, input.resourceType, input.resourceCode, input.unitCode, input.currencyCode, input.quantity, input.decimals, input.dueDate, input.sourceRefHash, input.evidenceHash, input.propertiesHash, input.metadataHash, input.qualitySchemaHash, input.metadataURI, input.propertiesURI);
+        emit ObligationIssued(
+            obligationId,
+            input.issuerPassportId,
+            input.beneficiaryPassportId,
+            input.externalCounterpartyHash,
+            input.resourceType,
+            input.resourceCode,
+            input.unitCode,
+            input.currencyCode,
+            input.quantity,
+            input.decimals,
+            input.dueDate,
+            input.sourceRefHash,
+            input.evidenceHash,
+            input.propertiesHash,
+            input.metadataHash,
+            input.qualitySchemaHash,
+            input.metadataURI,
+            input.propertiesURI
+        );
     }
 
-    function updateMetadata(uint256 obligationId, bytes32 metadataHash, string calldata metadataURI) external whenNotPaused {
+    function updateMetadata(uint256 obligationId, bytes32 metadataHash, string calldata metadataURI)
+        external
+        whenNotPaused
+    {
         Obligation storage o = _requireActive(obligationId);
-        if (!passportRegistry.isAuthorized(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA)) {
-            revert UnauthorizedParticipant(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA);
+        if (!passportRegistry.isAuthorized(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            )) {
+            revert UnauthorizedParticipant(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            );
         }
         bytes32 oldHash = o.metadataHash;
         o.metadataHash = metadataHash;
@@ -217,7 +315,11 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         emit ObligationMetadataUpdated(obligationId, oldHash, metadataHash, metadataURI);
     }
 
-    function lockForSettlement(uint256 obligationId, bytes32 settlementId, uint256 quantity, uint64 expiresAt) external onlyRole(SETTLEMENT_ROLE) whenNotPaused {
+    function lockForSettlement(uint256 obligationId, bytes32 settlementId, uint256 quantity, uint64 expiresAt)
+        external
+        onlyRole(SETTLEMENT_ROLE)
+        whenNotPaused
+    {
         _requireActive(obligationId);
         if (quantity == 0 || settlementId == bytes32(0) || expiresAt <= block.timestamp) revert InvalidQuantity();
         if (_locks[obligationId][settlementId].quantity != 0) revert LockExists(obligationId, settlementId);
@@ -236,7 +338,11 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         emit ObligationLockReleased(obligationId, settlementId, l.quantity);
     }
 
-    function settleLocked(uint256 obligationId, bytes32 settlementId, uint256 quantity, bytes32 fulfillmentEvidenceHash) external onlyRole(SETTLEMENT_ROLE) whenNotPaused {
+    function settleLocked(uint256 obligationId, bytes32 settlementId, uint256 quantity, bytes32 fulfillmentEvidenceHash)
+        external
+        onlyRole(SETTLEMENT_ROLE)
+        whenNotPaused
+    {
         Obligation storage o = _requireActive(obligationId);
         Lock storage l = _locks[obligationId][settlementId];
         if (l.quantity == 0) revert LockNotFound(obligationId, settlementId);
@@ -248,13 +354,19 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         if (l.quantity == 0) delete _locks[obligationId][settlementId];
         o.settledQuantity += quantity;
         if (outstandingQuantity(obligationId) == 0) o.status = ObligationStatus.SETTLED;
-        emit ObligationSettled(obligationId, settlementId, quantity, outstandingQuantity(obligationId), fulfillmentEvidenceHash);
+        emit ObligationSettled(
+            obligationId, settlementId, quantity, outstandingQuantity(obligationId), fulfillmentEvidenceHash
+        );
     }
 
     function cancelResidual(uint256 obligationId) external whenNotPaused {
         Obligation storage o = _requireActive(obligationId);
-        if (!passportRegistry.isAuthorized(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA)) {
-            revert UnauthorizedParticipant(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA);
+        if (!passportRegistry.isAuthorized(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            )) {
+            revert UnauthorizedParticipant(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            );
         }
         if (_totalLocked[obligationId] != 0) revert ActiveLocksExist(obligationId);
         uint256 residual = outstandingQuantity(obligationId);
@@ -277,12 +389,39 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         uint32 confidencePpm
     ) external whenNotPaused {
         Obligation storage o = _requireActive(obligationId);
-        bool issuerAuthorized = passportRegistry.isAuthorized(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA);
-        if (!issuerAuthorized && !hasRole(QUALITY_ATTESTOR_ROLE, msg.sender)) revert UnauthorizedParticipant(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA);
+        bool issuerAuthorized = passportRegistry.isAuthorized(
+            o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+        );
+        if (!issuerAuthorized && !hasRole(QUALITY_ATTESTOR_ROLE, msg.sender)) {
+            revert UnauthorizedParticipant(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            );
+        }
         if (confidencePpm > 1_000_000) revert InvalidConfidence(confidencePpm);
         uint64 nowTs = uint64(block.timestamp);
-        _qualityObservations[obligationId][qualityKey] = QualityObservation(valueType, encodedValue, decimals, sourceType, evidenceHash, nowTs, validUntil, observationCount, confidencePpm);
-        emit QualityObservationRecorded(obligationId, qualityKey, encodedValue, decimals, sourceType, evidenceHash, nowTs, validUntil, observationCount, confidencePpm);
+        _qualityObservations[obligationId][qualityKey] = QualityObservation(
+            valueType,
+            encodedValue,
+            decimals,
+            sourceType,
+            evidenceHash,
+            nowTs,
+            validUntil,
+            observationCount,
+            confidencePpm
+        );
+        emit QualityObservationRecorded(
+            obligationId,
+            qualityKey,
+            encodedValue,
+            decimals,
+            sourceType,
+            evidenceHash,
+            nowTs,
+            validUntil,
+            observationCount,
+            confidencePpm
+        );
     }
 
     function createQualityClaim(
@@ -297,16 +436,50 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         bytes32 salt
     ) external whenNotPaused returns (bytes32 claimId) {
         Obligation storage o = _requireActive(obligationId);
-        if (!passportRegistry.isAuthorized(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA)) {
-            revert UnauthorizedParticipant(o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA);
+        if (!passportRegistry.isAuthorized(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            )) {
+            revert UnauthorizedParticipant(
+                o.issuerPassportId, msg.sender, OrbitasPermissions.UPDATE_OBLIGATION_METADATA
+            );
         }
-        claimId = keccak256(abi.encode(block.chainid, address(this), obligationId, qualityKey, operator, threshold, decimals, contextHash, validUntil, salt));
+        claimId = keccak256(
+            abi.encode(
+                block.chainid,
+                address(this),
+                obligationId,
+                qualityKey,
+                operator,
+                threshold,
+                decimals,
+                contextHash,
+                validUntil,
+                salt
+            )
+        );
         if (_qualityClaims[claimId].obligationId != 0) revert ClaimExists(claimId);
-        _qualityClaims[claimId] = QualityClaim(obligationId, qualityKey, operator, threshold, decimals, contextHash, validUntil, evidenceHash, bytes32(0), false);
-        emit QualityClaimCreated(claimId, obligationId, qualityKey, operator, threshold, decimals, contextHash, validUntil, evidenceHash);
+        _qualityClaims[claimId] = QualityClaim(
+            obligationId,
+            qualityKey,
+            operator,
+            threshold,
+            decimals,
+            contextHash,
+            validUntil,
+            evidenceHash,
+            bytes32(0),
+            false
+        );
+        emit QualityClaimCreated(
+            claimId, obligationId, qualityKey, operator, threshold, decimals, contextHash, validUntil, evidenceHash
+        );
     }
 
-    function resolveQualityClaim(bytes32 claimId, bytes32 resolution, bytes32 evidenceHash) external onlyRole(QUALITY_ATTESTOR_ROLE) whenNotPaused {
+    function resolveQualityClaim(bytes32 claimId, bytes32 resolution, bytes32 evidenceHash)
+        external
+        onlyRole(QUALITY_ATTESTOR_ROLE)
+        whenNotPaused
+    {
         QualityClaim storage c = _qualityClaims[claimId];
         if (c.obligationId == 0) revert ClaimNotFound(claimId);
         if (c.resolved) revert ClaimAlreadyResolved(claimId);
@@ -316,18 +489,45 @@ contract MultidimensionalObligation is AccessControl, Pausable {
     }
 
     /// @notice Hook for a separately approved guarantee registry. This records S without custody/slashing logic here.
-    function recordQualityStakeSignal(bytes32 claimId, uint256 stakerPassportId, address collateralToken, StakeSide side, uint256 amount) external onlyRole(GUARANTEE_REGISTRY_ROLE) whenNotPaused {
+    function recordQualityStakeSignal(
+        bytes32 claimId,
+        uint256 stakerPassportId,
+        address collateralToken,
+        StakeSide side,
+        uint256 amount
+    ) external onlyRole(GUARANTEE_REGISTRY_ROLE) whenNotPaused {
         if (_qualityClaims[claimId].obligationId == 0) revert ClaimNotFound(claimId);
         StakeSummary storage s = _stakeSummaries[claimId][collateralToken];
-        if (side == StakeSide.FOR) s.forAmount = amount; else s.againstAmount = amount;
-        emit QualityStakeSignalChanged(claimId, stakerPassportId, collateralToken, side, amount, s.forAmount, s.againstAmount, msg.sender);
+        if (side == StakeSide.FOR) s.forAmount = amount;
+        else s.againstAmount = amount;
+        emit QualityStakeSignalChanged(
+            claimId, stakerPassportId, collateralToken, side, amount, s.forAmount, s.againstAmount, msg.sender
+        );
     }
 
-    function getObligation(uint256 obligationId) external view returns (Obligation memory) { return _obligations[obligationId]; }
-    function getQualityObservation(uint256 obligationId, bytes32 qualityKey) external view returns (QualityObservation memory) { return _qualityObservations[obligationId][qualityKey]; }
-    function getQualityClaim(bytes32 claimId) external view returns (QualityClaim memory) { return _qualityClaims[claimId]; }
-    function getStakeSummary(bytes32 claimId, address collateralToken) external view returns (StakeSummary memory) { return _stakeSummaries[claimId][collateralToken]; }
-    function lockedQuantity(uint256 obligationId) external view returns (uint256) { return _totalLocked[obligationId]; }
+    function getObligation(uint256 obligationId) external view returns (Obligation memory) {
+        return _obligations[obligationId];
+    }
+
+    function getQualityObservation(uint256 obligationId, bytes32 qualityKey)
+        external
+        view
+        returns (QualityObservation memory)
+    {
+        return _qualityObservations[obligationId][qualityKey];
+    }
+
+    function getQualityClaim(bytes32 claimId) external view returns (QualityClaim memory) {
+        return _qualityClaims[claimId];
+    }
+
+    function getStakeSummary(bytes32 claimId, address collateralToken) external view returns (StakeSummary memory) {
+        return _stakeSummaries[claimId][collateralToken];
+    }
+
+    function lockedQuantity(uint256 obligationId) external view returns (uint256) {
+        return _totalLocked[obligationId];
+    }
 
     function outstandingQuantity(uint256 obligationId) public view returns (uint256) {
         Obligation storage o = _obligations[obligationId];
@@ -338,8 +538,13 @@ contract MultidimensionalObligation is AccessControl, Pausable {
         return outstandingQuantity(obligationId) - _totalLocked[obligationId];
     }
 
-    function pause() external onlyRole(PAUSER_ROLE) { _pause(); }
-    function unpause() external onlyRole(PAUSER_ROLE) { _unpause(); }
+    function pause() external onlyRole(PAUSER_ROLE) {
+        _pause();
+    }
+
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+    }
 
     function _requireActive(uint256 obligationId) private view returns (Obligation storage o) {
         o = _obligations[obligationId];

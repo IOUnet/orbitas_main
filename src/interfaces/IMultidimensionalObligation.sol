@@ -2,8 +2,17 @@
 pragma solidity 0.8.36;
 
 interface IMultidimensionalObligation {
-    enum ResourceType { MONETARY, GOODS, SERVICE }
-    enum ObligationStatus { NONE, ACTIVE, SETTLED, CANCELLED }
+    enum ResourceType {
+        MONETARY,
+        GOODS,
+        SERVICE
+    }
+    enum ObligationStatus {
+        NONE,
+        ACTIVE,
+        SETTLED,
+        CANCELLED
+    }
 
     struct ObligationView {
         uint256 issuerPassportId;
@@ -34,5 +43,6 @@ interface IMultidimensionalObligation {
     function lockedQuantity(uint256 obligationId) external view returns (uint256);
     function lockForSettlement(uint256 obligationId, bytes32 settlementId, uint256 quantity, uint64 expiresAt) external;
     function releaseLock(uint256 obligationId, bytes32 settlementId) external;
-    function settleLocked(uint256 obligationId, bytes32 settlementId, uint256 quantity, bytes32 fulfillmentEvidenceHash) external;
+    function settleLocked(uint256 obligationId, bytes32 settlementId, uint256 quantity, bytes32 fulfillmentEvidenceHash)
+        external;
 }

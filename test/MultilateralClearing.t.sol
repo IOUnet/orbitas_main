@@ -40,10 +40,14 @@ contract MultilateralClearingTest is Test {
         cId = passports.registerPassport(keccak256("c"), "ipfs://c");
     }
 
-    function _issue(address issuer, uint256 issuerId, uint256 beneficiaryId, uint256 quantity, uint64 dueDate, bytes32 sourceRef)
-        internal
-        returns (uint256)
-    {
+    function _issue(
+        address issuer,
+        uint256 issuerId,
+        uint256 beneficiaryId,
+        uint256 quantity,
+        uint64 dueDate,
+        bytes32 sourceRef
+    ) internal returns (uint256) {
         MultidimensionalObligation.IssueInput memory input = MultidimensionalObligation.IssueInput({
             issuerPassportId: issuerId,
             beneficiaryPassportId: beneficiaryId,
@@ -84,12 +88,8 @@ contract MultilateralClearingTest is Test {
             salt: keccak256(abi.encode(incoming, outgoing, quantity, expiry))
         });
         bytes32 digest = clearing.pathDigest(order);
-        settlementId = clearing.createPathInstruction(
-            order,
-            _sign(A_PK, digest),
-            _sign(B_PK, digest),
-            _sign(C_PK, digest)
-        );
+        settlementId =
+            clearing.createPathInstruction(order, _sign(A_PK, digest), _sign(B_PK, digest), _sign(C_PK, digest));
     }
 
     function test_openPathRedirectAndSettlement() public {
@@ -113,18 +113,17 @@ contract MultilateralClearingTest is Test {
         uint64 confirmDeadline = uint64(block.timestamp + 1 days);
         bytes32 confirmDigest = clearing.confirmationDigest(settlementId, evidence, confirmDeadline);
         clearing.confirmPathSettlement(
-            settlementId,
-            evidence,
-            confirmDeadline,
-            _sign(B_PK, confirmDigest),
-            _sign(C_PK, confirmDigest)
+            settlementId, evidence, confirmDeadline, _sign(B_PK, confirmDigest), _sign(C_PK, confirmDigest)
         );
 
         assertEq(obligations.availableQuantity(aToB), 20_00);
         assertEq(obligations.availableQuantity(bToC), 0);
         assertEq(obligations.lockedQuantity(aToB), 0);
         assertEq(obligations.lockedQuantity(bToC), 0);
-        assertEq(uint256(clearing.getInstruction(settlementId).status), uint256(MultilateralClearing.InstructionStatus.SETTLED));
+        assertEq(
+            uint256(clearing.getInstruction(settlementId).status),
+            uint256(MultilateralClearing.InstructionStatus.SETTLED)
+        );
     }
 
     function test_expiryReleasesBothLocks() public {

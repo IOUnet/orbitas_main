@@ -16,8 +16,10 @@ contract MultidimensionalObligationTest is Test {
     function setUp() public {
         p = new ParticipantPassport(address(this));
         o = new MultidimensionalObligation(address(p), address(this));
-        vm.prank(alice); aliceId = p.registerPassport(keccak256("a"), "ipfs://a");
-        vm.prank(bob); bobId = p.registerPassport(keccak256("b"), "ipfs://b");
+        vm.prank(alice);
+        aliceId = p.registerPassport(keccak256("a"), "ipfs://a");
+        vm.prank(bob);
+        bobId = p.registerPassport(keccak256("b"), "ipfs://b");
     }
 
     function _input(bytes32 source) internal view returns (MultidimensionalObligation.IssueInput memory x) {
@@ -47,15 +49,30 @@ contract MultidimensionalObligationTest is Test {
         uint256 id = o.issueObligation(_input(keccak256("source-1")));
         assertEq(o.availableQuantity(id), 100_00);
         vm.prank(alice);
-        o.recordQualityObservation(id, keccak256("delivery.on_time"), MultidimensionalObligation.QualityValueType.UINT, bytes32(uint256(930_000)), 6, bytes32("ERP"), keccak256("quality-evidence"), uint64(block.timestamp + 30 days), 183, 970_000);
-        MultidimensionalObligation.QualityObservation memory q = o.getQualityObservation(id, keccak256("delivery.on_time"));
+        o.recordQualityObservation(
+            id,
+            keccak256("delivery.on_time"),
+            MultidimensionalObligation.QualityValueType.UINT,
+            bytes32(uint256(930_000)),
+            6,
+            bytes32("ERP"),
+            keccak256("quality-evidence"),
+            uint64(block.timestamp + 30 days),
+            183,
+            970_000
+        );
+        MultidimensionalObligation.QualityObservation memory q =
+            o.getQualityObservation(id, keccak256("delivery.on_time"));
         assertEq(uint256(q.encodedValue), 930_000);
         assertEq(q.confidencePpm, 970_000);
     }
 
     function test_duplicateSourceReverts() public {
         bytes32 src = keccak256("same");
-        vm.prank(alice); o.issueObligation(_input(src));
-        vm.prank(alice); vm.expectRevert(); o.issueObligation(_input(src));
+        vm.prank(alice);
+        o.issueObligation(_input(src));
+        vm.prank(alice);
+        vm.expectRevert();
+        o.issueObligation(_input(src));
     }
 }

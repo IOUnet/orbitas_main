@@ -119,7 +119,9 @@ contract ObligationInvariantTest is StdInvariant, Test {
         MultidimensionalObligation.Obligation memory o = obligations.getObligation(obligationId);
         uint256 locked = obligations.lockedQuantity(obligationId);
         assertLe(o.settledQuantity + o.cancelledQuantity + locked, o.totalQuantity);
-        assertEq(obligations.outstandingQuantity(obligationId), o.totalQuantity - o.settledQuantity - o.cancelledQuantity);
+        assertEq(
+            obligations.outstandingQuantity(obligationId), o.totalQuantity - o.settledQuantity - o.cancelledQuantity
+        );
         assertEq(obligations.availableQuantity(obligationId) + locked, obligations.outstandingQuantity(obligationId));
     }
 }

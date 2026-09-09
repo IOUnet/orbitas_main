@@ -9,7 +9,9 @@ contract ParticipantPassportTest is Test {
     address alice = address(0xA11CE);
     address bob = address(0xB0B);
 
-    function setUp() public { p = new ParticipantPassport(address(this)); }
+    function setUp() public {
+        p = new ParticipantPassport(address(this));
+    }
 
     function test_permissionlessRegisterAndRotate() public {
         vm.prank(alice);

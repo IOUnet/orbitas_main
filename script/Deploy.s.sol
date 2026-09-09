@@ -8,7 +8,15 @@ import {BilateralExchange} from "../src/BilateralExchange.sol";
 import {MultilateralClearing} from "../src/MultilateralClearing.sol";
 
 contract Deploy is Script {
-    function run() external returns (ParticipantPassport passports, MultidimensionalObligation obligations, BilateralExchange bilateral, MultilateralClearing multilateral) {
+    function run()
+        external
+        returns (
+            ParticipantPassport passports,
+            MultidimensionalObligation obligations,
+            BilateralExchange bilateral,
+            MultilateralClearing multilateral
+        )
+    {
         address admin = vm.envAddress("ORBITAS_ADMIN");
         vm.startBroadcast();
         passports = new ParticipantPassport(admin);
