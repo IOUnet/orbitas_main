@@ -9,8 +9,7 @@ import {MultidimensionalObligation} from "../src/MultidimensionalObligation.sol"
 contract LocalSeed is Script {
     function run() external {
         ParticipantPassport passports = ParticipantPassport(vm.envAddress("PASSPORT_ADDRESS"));
-        MultidimensionalObligation obligations =
-            MultidimensionalObligation(vm.envAddress("OBLIGATION_ADDRESS"));
+        MultidimensionalObligation obligations = MultidimensionalObligation(vm.envAddress("OBLIGATION_ADDRESS"));
 
         uint256 alicePk = vm.envUint("ALICE_PK");
         uint256 bobPk = vm.envUint("BOB_PK");
@@ -32,8 +31,7 @@ contract LocalSeed is Script {
     {
         vm.startBroadcast(pk);
         passportId = passports.registerPassport(
-            keccak256(abi.encode(company, host)),
-            string.concat("ipfs://orbitas-local/passports/", host)
+            keccak256(abi.encode(company, host)), string.concat("ipfs://orbitas-local/passports/", host)
         );
         vm.stopBroadcast();
     }
