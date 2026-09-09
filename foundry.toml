@@ -1,3 +1,4 @@
+# Orbitas Foundry configuration. Solidity is pinned to the protocol contract pragma.
 [profile.default]
 src = "src"
 test = "test"
