@@ -35,17 +35,17 @@ for ((i=1; i<=60; i++)); do
   sleep 1
 done
 
-# Graph Node root endpoints may return non-2xx; use the indexing status GraphQL endpoint.
+# Only require Graph Node's admin HTTP listener here. A deployed Subgraph does not exist yet,
+# so querying indexingStatuses before `graph create/deploy` is an unnecessarily strict readiness gate.
 for ((i=1; i<=60; i++)); do
-  if curl -fsS -X POST http://127.0.0.1:8030/graphql \
-      -H 'content-type: application/json' \
-      --data '{"query":"{ indexingStatuses { subgraph } }"}' >/dev/null 2>&1; then
-    echo "graph-node is ready"
+  http_code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:8020/ 2>/dev/null || true)"
+  if [[ -n "$http_code" && "$http_code" != "000" ]]; then
+    echo "graph-node admin listener is ready (HTTP $http_code)"
     exit 0
   fi
-  sleep 2
+  sleep 1
 done
 
-echo "timed out waiting for graph-node" >&2
+echo "timed out waiting for graph-node admin listener" >&2
 docker compose -f docker-compose.test.yml logs graph-node >&2 || true
 exit 1
