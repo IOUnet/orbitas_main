@@ -24,12 +24,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for i in 00 01 02 03 04 05 06 07 08; do
+          for i in 00 01 02 03 04 06 07 08; do
             test -s "bootstrap/chunk-${i}.b64"
           done
-          cat bootstrap/chunk-{00..08}.b64 > /tmp/orbitas-bootstrap.b64
+          for i in 00 01 02 03 04 05; do
+            test -s "bootstrap/chunk-05-${i}.b64"
+          done
+          cat bootstrap/chunk-{00..04}.b64 > /tmp/orbitas-bootstrap.b64
+          cat bootstrap/chunk-05-{00..05}.b64 >> /tmp/orbitas-bootstrap.b64
+          cat bootstrap/chunk-{06..08}.b64 >> /tmp/orbitas-bootstrap.b64
+          test "$(wc -c < /tmp/orbitas-bootstrap.b64)" -eq 156212
           base64 --decode /tmp/orbitas-bootstrap.b64 > /tmp/orbitas-bootstrap.zip
-          unzip -t /tmp/orbitas-bootstrap.zip >/dev/null
+          unzip -t /tmp/orbitas-bootstrap.zip
           rm -rf /tmp/orbitas-bootstrap
           mkdir -p /tmp/orbitas-bootstrap
           unzip -q /tmp/orbitas-bootstrap.zip -d /tmp/orbitas-bootstrap
