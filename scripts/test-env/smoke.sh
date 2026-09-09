@@ -54,6 +54,7 @@ for ((i=1; i<=90; i++)); do
   http_code="$(curl -sS -o /dev/null -w '%{http_code}' "$MCP_URL" 2>/dev/null || true)"
   if [[ -n "$http_code" && "$http_code" != "000" ]]; then
     echo "MCP HTTP transport reachable at $MCP_URL (HTTP $http_code)"
+    docker compose -f docker-compose.test.yml exec -T mcp npm run smoke:http
     echo "TEST ENVIRONMENT: PASS"
     exit 0
   fi
