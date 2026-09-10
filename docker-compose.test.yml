@@ -98,6 +98,10 @@ services:
     working_dir: /workspace/indexer/mcp
     volumes:
       - ./:/workspace
+      # Keep root-owned npm/build artifacts inside Docker volumes so the
+      # host checkout remains writable by Codex/GitHub Actions afterwards.
+      - orbitas_mcp_node_modules:/workspace/indexer/mcp/node_modules
+      - orbitas_mcp_dist:/workspace/indexer/mcp/dist
     environment:
       PORT: "3000"
       GRAPHQL_ENDPOINT: http://graph-node:8000/subgraphs/name/orbitas/local
@@ -108,3 +112,5 @@ services:
 volumes:
   orbitas_graph_postgres:
   orbitas_ipfs:
+  orbitas_mcp_node_modules:
+  orbitas_mcp_dist:
