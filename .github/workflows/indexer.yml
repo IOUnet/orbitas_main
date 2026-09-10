@@ -1,25 +1,29 @@
 name: indexer
+
+# Intentionally manual. Orbitas CI must not run on every push/PR update.
 on:
-  pull_request:
-    paths: ["indexer/**"]
-  push:
-    branches: [main]
-    paths: ["indexer/**"]
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   subgraph-mcp:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+
       - name: MCP install/build
         working-directory: indexer/mcp
-        run: npm install && npm run build
+        run: npm install --no-audit --no-fund && npm run build
+
       - name: Subgraph install
         working-directory: indexer
-        run: npm install
-      - name: Subgraph codegen/build note
-        run: echo "Run graph codegen/build after deployment-specific subgraph.yaml values and final compiled ABIs are supplied."
+        run: npm install --no-audit --no-fund
+
+      - name: Subgraph build note
+        run: echo "Use the test-environment workflow for deployment-specific subgraph codegen/build/deploy validation."
