@@ -1,0 +1,153 @@
+type Participant @entity(immutable: false) {
+  id: ID!
+  controller: Bytes!
+  metadataHash: Bytes!
+  metadataURI: String!
+  status: Int!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type PassportEvent @entity(immutable: true) {
+  id: Bytes!
+  passportId: BigInt!
+  eventType: String!
+  controller: Bytes
+  metadataHash: Bytes
+  metadataURI: String
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Obligation @entity(immutable: false) {
+  id: ID!
+  issuerPassportId: BigInt!
+  beneficiaryPassportId: BigInt!
+  externalCounterpartyHash: Bytes!
+  resourceType: Int!
+  resourceCode: Bytes!
+  unitCode: Bytes!
+  currencyCode: Bytes!
+  totalQuantity: BigInt!
+  settledQuantity: BigInt!
+  cancelledQuantity: BigInt!
+  lockedQuantity: BigInt!
+  availableQuantity: BigInt!
+  decimals: Int!
+  dueDate: BigInt!
+  sourceRefHash: Bytes!
+  evidenceHash: Bytes!
+  propertiesHash: Bytes!
+  metadataHash: Bytes!
+  qualitySchemaHash: Bytes!
+  metadataURI: String!
+  propertiesURI: String!
+  status: Int!
+  createdAt: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type ObligationEvent @entity(immutable: true) {
+  id: Bytes!
+  obligationId: BigInt!
+  eventType: String!
+  quantity: BigInt
+  settlementId: Bytes
+  evidenceHash: Bytes
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type QualityDimension @entity(immutable: false) {
+  id: ID!
+  obligationId: BigInt!
+  qualityKey: Bytes!
+  encodedValue: Bytes!
+  decimals: Int!
+  sourceType: Bytes!
+  evidenceHash: Bytes!
+  observedAt: BigInt!
+  validUntil: BigInt!
+  observationCount: BigInt!
+  confidencePpm: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type QualityObservationEvent @entity(immutable: true) {
+  id: Bytes!
+  obligationId: BigInt!
+  qualityKey: Bytes!
+  encodedValue: Bytes!
+  decimals: Int!
+  sourceType: Bytes!
+  evidenceHash: Bytes!
+  observedAt: BigInt!
+  validUntil: BigInt!
+  observationCount: BigInt!
+  confidencePpm: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type QualityClaim @entity(immutable: false) {
+  id: ID!
+  obligationId: BigInt!
+  qualityKey: Bytes!
+  operator: Int!
+  threshold: BigInt!
+  decimals: Int!
+  contextHash: Bytes!
+  validUntil: BigInt!
+  evidenceHash: Bytes!
+  resolution: Bytes
+  resolved: Boolean!
+}
+
+type QualityStakeSummary @entity(immutable: false) {
+  id: ID!
+  claimId: Bytes!
+  collateralToken: Bytes!
+  forAmount: BigInt!
+  againstAmount: BigInt!
+  updatedAtBlock: BigInt!
+}
+
+type ObligationLock @entity(immutable: false) {
+  id: ID!
+  obligationId: BigInt!
+  settlementId: Bytes!
+  quantity: BigInt!
+  expiresAt: BigInt!
+  active: Boolean!
+}
+
+type BilateralSettlement @entity(immutable: true) {
+  id: Bytes!
+  exchangeId: Bytes!
+  leftObligationId: BigInt!
+  rightObligationId: BigInt!
+  quantity: BigInt!
+  leftPassportId: BigInt!
+  rightPassportId: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type SettlementInstruction @entity(immutable: false) {
+  id: ID!
+  settlementId: Bytes!
+  payerPassportId: BigInt!
+  intermediaryPassportId: BigInt!
+  receiverPassportId: BigInt!
+  incomingObligationId: BigInt!
+  outgoingObligationId: BigInt!
+  quantity: BigInt!
+  dueDate: BigInt!
+  expiresAt: BigInt!
+  consentProofHash: Bytes!
+  fulfillmentEvidenceHash: Bytes
+  status: Int!
+  updatedAtBlock: BigInt!
+}

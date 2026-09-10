@@ -1,0 +1,106 @@
+name: orbitas-test
+
+services:
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    entrypoint: ["anvil"]
+    command:
+      - --host
+      - 0.0.0.0
+      - --chain-id
+      - "31337"
+      - --block-time
+      - "1"
+      - --accounts
+      - "10"
+      - --balance
+      - "10000"
+    ports:
+      - "8545:8545"
+    healthcheck:
+      test: ["CMD", "cast", "block-number", "--rpc-url", "http://127.0.0.1:8545"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  postgres:
+    # Match the Graph Node project's fresh-database requirements: UTF-8 + C locale.
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+      PGDATA: /var/lib/postgresql/data
+      POSTGRES_INITDB_ARGS: "-E UTF8 --locale=C"
+    command:
+      - postgres
+      - -cshared_preload_libraries=pg_stat_statements
+      - -cmax_connections=200
+    volumes:
+      - orbitas_graph_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U graph-node -d graph-node"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  ipfs:
+    image: ipfs/kubo:v0.42.0
+    environment:
+      IPFS_PROFILE: test
+      IPFS_TELEMETRY: "off"
+    ports:
+      - "5001:5001"
+      - "8080:8080"
+    volumes:
+      - orbitas_ipfs:/data/ipfs
+    healthcheck:
+      test: ["CMD", "ipfs", "id"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  graph-node:
+    image: graphprotocol/graph-node:v0.44.0
+    depends_on:
+      anvil:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      ipfs:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8020:8020"
+      - "8030:8030"
+      - "8040:8040"
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: ipfs:5001
+      ethereum: orbitas:http://anvil:8545
+      GRAPH_LOG: info
+      GRAPH_ETHEREUM_POLLING_INTERVAL: 1000
+      ETHEREUM_REORG_THRESHOLD: 0
+
+  mcp:
+    image: node:22-alpine
+    depends_on:
+      graph-node:
+        condition: service_started
+    working_dir: /workspace/indexer/mcp
+    volumes:
+      - ./:/workspace
+    environment:
+      PORT: "3000"
+      GRAPHQL_ENDPOINT: http://graph-node:8000/subgraphs/name/orbitas/local
+    command: ["sh", "-lc", "npm install --no-audit --no-fund && npm run build && npm run start:http"]
+    ports:
+      - "3000:3000"
+
+volumes:
+  orbitas_graph_postgres:
+  orbitas_ipfs:

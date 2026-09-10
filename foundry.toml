@@ -1,0 +1,31 @@
+# Orbitas Foundry configuration. Solidity is pinned to the protocol contract pragma.
+[profile.default]
+src = "src"
+test = "test"
+script = "script"
+out = "out"
+libs = ["lib"]
+solc_version = "0.8.36"
+evm_version = "cancun"
+optimizer = true
+optimizer_runs = 10000
+via_ir = true
+bytecode_hash = "ipfs"
+cbor_metadata = true
+
+[fuzz]
+runs = 1024
+
+[invariant]
+runs = 256
+depth = 128
+fail_on_revert = true
+failure_persist_dir = "cache/invariant"
+
+[profile.ci.fuzz]
+runs = 4096
+
+[profile.ci.invariant]
+runs = 512
+depth = 256
+fail_on_revert = true

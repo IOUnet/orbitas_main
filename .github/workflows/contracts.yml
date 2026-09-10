@@ -1,0 +1,52 @@
+name: contracts
+
+on:
+  pull_request:
+    paths: ["src/**", "test/**", "script/**", "foundry.toml", "remappings.txt"]
+  push:
+    branches: [main]
+    paths: ["src/**", "test/**", "script/**", "foundry.toml", "remappings.txt"]
+
+permissions:
+  contents: write
+
+jobs:
+  forge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
+          fetch-depth: 0
+
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+
+      - name: Install pinned dependencies
+        run: |
+          forge install OpenZeppelin/openzeppelin-contracts@v5.6.1 --no-git
+          forge install foundry-rs/forge-std@v1.16.1 --no-git
+
+      - name: Apply canonical forge formatting
+        if: github.event_name == 'pull_request'
+        run: |
+          # Foundry 1.8.1 can require a second formatting pass for a dangling single-line if body.
+          forge fmt
+          forge fmt
+          if ! git diff --quiet -- src test script; then
+            git config user.name "orbitas-ci"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src test script
+            git commit -m "style: apply forge fmt"
+            git push origin HEAD:${{ github.head_ref }}
+          fi
+
+      - name: Check formatting
+        run: forge fmt --check
+
+      - name: Build contracts
+        run: FOUNDRY_PROFILE=ci forge build --sizes
+
+      - name: Run contract tests
+        run: FOUNDRY_PROFILE=ci forge test -vvv

@@ -1,0 +1,14 @@
+out/
+cache/
+lib/
+broadcast/
+.env
+.test-env/
+node_modules/
+indexer/node_modules/
+indexer/generated/
+indexer/build/
+indexer/subgraph.local.yaml
+indexer/mcp/node_modules/
+*.log
+.DS_Store
