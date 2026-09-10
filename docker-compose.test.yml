@@ -16,7 +16,7 @@ services:
       - --balance
       - "10000"
     ports:
-      - "8545:8545"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8545:8545"
     healthcheck:
       test: ["CMD", "cast", "block-number", "--rpc-url", "http://127.0.0.1:8545"]
       interval: 2s
@@ -24,7 +24,6 @@ services:
       retries: 30
 
   postgres:
-    # Match the Graph Node project's fresh-database requirements: UTF-8 + C locale.
     image: postgres:16-bookworm
     environment:
       POSTGRES_USER: graph-node
@@ -50,8 +49,8 @@ services:
       IPFS_PROFILE: test
       IPFS_TELEMETRY: "off"
     ports:
-      - "5001:5001"
-      - "8080:8080"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:5001:5001"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8080:8080"
     volumes:
       - orbitas_ipfs:/data/ipfs
     healthcheck:
@@ -70,11 +69,11 @@ services:
       ipfs:
         condition: service_healthy
     ports:
-      - "8000:8000"
-      - "8001:8001"
-      - "8020:8020"
-      - "8030:8030"
-      - "8040:8040"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8000:8000"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8001:8001"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8020:8020"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8030:8030"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:8040:8040"
     environment:
       postgres_host: postgres
       postgres_user: graph-node
@@ -84,9 +83,6 @@ services:
       ethereum: orbitas:http://anvil:8545
       GRAPH_LOG: info
       GRAPH_ETHEREUM_POLLING_INTERVAL: 1000
-      # Local Anvil does not need a reorg buffer, but Graph Node requires
-      # subgraph_manifest.history_blocks > 0. prune:auto otherwise resolves
-      # to zero when the reorg threshold is zero.
       ETHEREUM_REORG_THRESHOLD: 0
       GRAPH_MIN_HISTORY_BLOCKS: 1
 
@@ -95,9 +91,6 @@ services:
     depends_on:
       graph-node:
         condition: service_started
-    # Build and run from an ephemeral container-local copy. The repository is
-    # mounted read-only so Docker can never leave root-owned node_modules/dist
-    # behind in the developer or GitHub Actions checkout.
     working_dir: /tmp/mcp
     volumes:
       - ./:/workspace:ro
@@ -106,7 +99,7 @@ services:
       GRAPHQL_ENDPOINT: http://graph-node:8000/subgraphs/name/orbitas/local
     command: ["sh", "-lc", "cp -R /workspace/indexer/mcp/. /tmp/mcp/ && npm install --no-audit --no-fund && npm run build && npm run start:http"]
     ports:
-      - "3000:3000"
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:3000:3000"
 
 volumes:
   orbitas_graph_postgres:
