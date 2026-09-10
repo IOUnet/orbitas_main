@@ -84,7 +84,11 @@ services:
       ethereum: orbitas:http://anvil:8545
       GRAPH_LOG: info
       GRAPH_ETHEREUM_POLLING_INTERVAL: 1000
+      # Local Anvil does not need a reorg buffer, but Graph Node requires
+      # subgraph_manifest.history_blocks > 0. prune:auto otherwise resolves
+      # to zero when the reorg threshold is zero.
       ETHEREUM_REORG_THRESHOLD: 0
+      GRAPH_MIN_HISTORY_BLOCKS: 1
 
   mcp:
     image: node:22-alpine
