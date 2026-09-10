@@ -2,6 +2,18 @@ name: test-environment
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - 'script/**'
+      - 'indexer/**'
+      - 'scripts/test-env/**'
+      - 'docker-compose.test.yml'
+      - 'Makefile'
+      - '.codex/**'
+      - '.github/workflows/test-environment.yml'
   pull_request:
     paths:
       - 'src/**'
