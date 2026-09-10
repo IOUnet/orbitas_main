@@ -1,32 +1,11 @@
 name: test-environment
 
+# Intentionally manual. Orbitas E2E must not run on every push/PR update.
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'src/**'
-      - 'script/**'
-      - 'indexer/**'
-      - 'scripts/test-env/**'
-      - 'docker-compose.test.yml'
-      - 'Makefile'
-      - '.codex/**'
-      - '.github/workflows/test-environment.yml'
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'script/**'
-      - 'indexer/**'
-      - 'scripts/test-env/**'
-      - 'docker-compose.test.yml'
-      - 'Makefile'
-      - '.codex/**'
-      - '.github/workflows/test-environment.yml'
 
 concurrency:
-  group: orbitas-test-environment-${{ github.event.pull_request.number || github.ref }}
+  group: orbitas-test-environment-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
