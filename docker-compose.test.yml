@@ -95,22 +95,19 @@ services:
     depends_on:
       graph-node:
         condition: service_started
-    working_dir: /workspace/indexer/mcp
+    # Build and run from an ephemeral container-local copy. The repository is
+    # mounted read-only so Docker can never leave root-owned node_modules/dist
+    # behind in the developer or GitHub Actions checkout.
+    working_dir: /tmp/mcp
     volumes:
-      - ./:/workspace
-      # Keep root-owned npm/build artifacts inside Docker volumes so the
-      # host checkout remains writable by Codex/GitHub Actions afterwards.
-      - orbitas_mcp_node_modules:/workspace/indexer/mcp/node_modules
-      - orbitas_mcp_dist:/workspace/indexer/mcp/dist
+      - ./:/workspace:ro
     environment:
       PORT: "3000"
       GRAPHQL_ENDPOINT: http://graph-node:8000/subgraphs/name/orbitas/local
-    command: ["sh", "-lc", "npm install --no-audit --no-fund && npm run build && npm run start:http"]
+    command: ["sh", "-lc", "cp -R /workspace/indexer/mcp/. /tmp/mcp/ && npm install --no-audit --no-fund && npm run build && npm run start:http"]
     ports:
       - "3000:3000"
 
 volumes:
   orbitas_graph_postgres:
   orbitas_ipfs:
-  orbitas_mcp_node_modules:
-  orbitas_mcp_dist:
