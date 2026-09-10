@@ -9,6 +9,10 @@ cd "$ROOT_DIR"
 
 bash scripts/test-env/render-subgraph.sh
 
+SUBGRAPH_VERSION_LABEL="${SUBGRAPH_VERSION_LABEL:-local-$(date -u +%Y%m%d%H%M%S)}"
+
+echo "deploying orbitas/local subgraph version: $SUBGRAPH_VERSION_LABEL"
+
 pushd indexer >/dev/null
 npm install --no-audit --no-fund
 npx graph codegen subgraph.local.yaml
@@ -17,6 +21,7 @@ npx graph create --node "$GRAPH_NODE_ADMIN" orbitas/local >/dev/null 2>&1 || tru
 npx graph deploy \
   --node "$GRAPH_NODE_ADMIN" \
   --ipfs "$IPFS_API" \
+  --version-label "$SUBGRAPH_VERSION_LABEL" \
   orbitas/local \
   subgraph.local.yaml
 popd >/dev/null
