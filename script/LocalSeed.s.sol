@@ -7,7 +7,7 @@ import {MultidimensionalObligation} from "../src/MultidimensionalObligation.sol"
 
 /// @notice Seed deterministic local-only participants and obligations for Anvil/Graph/MCP/Gateway smoke tests.
 contract LocalSeed is Script {
-    uint256 private constant ISSUE_OBLIGATION = 1 << 0;
+    uint256 private constant ISSUE_OBLIGATION = 1 << 0;\n    uint256 private constant UPDATE_OBLIGATION_METADATA = 1 << 1;
 
     function run() external {
         ParticipantPassport passports = ParticipantPassport(vm.envAddress("PASSPORT_ADDRESS"));
@@ -40,7 +40,7 @@ contract LocalSeed is Script {
             keccak256(abi.encode(company, host)), string.concat("ipfs://orbitas-local/passports/", host)
         );
         // Test-only delegation: the local Gateway relayer may publish ERP obligations for this Passport.
-        passports.setOperatorPermissions(passportId, gatewayOperator, ISSUE_OBLIGATION);
+        passports.setOperatorPermissions(\n            passportId, gatewayOperator, ISSUE_OBLIGATION | UPDATE_OBLIGATION_METADATA\n        );
         vm.stopBroadcast();
     }
 
