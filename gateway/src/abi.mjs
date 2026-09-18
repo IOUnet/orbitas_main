@@ -9,7 +9,8 @@ export const passportAbi = parseAbi([
 
 export const obligationAbi = parseAbi([
   "function obligationBySourceRef(bytes32 sourceRefHash) view returns (uint256)",
-  "function availableQuantity(uint256 obligationId) view returns (uint256)",\n  "function cancelResidual(uint256 obligationId)",
+  "function availableQuantity(uint256 obligationId) view returns (uint256)",
+  "function cancelResidual(uint256 obligationId)",
   "function issueObligation((uint256 issuerPassportId,uint256 beneficiaryPassportId,bytes32 externalCounterpartyHash,uint8 resourceType,bytes32 resourceCode,bytes32 unitCode,bytes32 currencyCode,uint256 quantity,uint8 decimals,uint64 dueDate,bytes32 propertiesHash,string propertiesURI,bytes32 sourceRefHash,bytes32 evidenceHash,bytes32 metadataHash,string metadataURI,bytes32 qualitySchemaHash) input) returns (uint256 obligationId)",
   "function getObligation(uint256 obligationId) view returns ((uint256 issuerPassportId,uint256 beneficiaryPassportId,bytes32 externalCounterpartyHash,uint8 resourceType,bytes32 resourceCode,bytes32 unitCode,bytes32 currencyCode,uint256 totalQuantity,uint256 settledQuantity,uint256 cancelledQuantity,uint8 decimals,uint64 dueDate,bytes32 propertiesHash,string propertiesURI,bytes32 sourceRefHash,bytes32 evidenceHash,bytes32 metadataHash,string metadataURI,bytes32 qualitySchemaHash,uint8 status,uint64 createdAt) obligation)"
 ]);
