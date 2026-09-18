@@ -1,38 +1,86 @@
 # Development Status
 
-## Implemented in bootstrap
+**Updated:** 2026-09-18
 
-- ParticipantPassport contract
-- MultidimensionalObligation contract (`T=(R,Q,S)` protocol hooks)
-- BilateralExchange contract
-- MultilateralClearing path contract
-- Foundry configuration + deployment script
-- Unit tests for passport/obligation plus bilateral and open-path settlement; stateful obligation invariant test
-- The Graph schema/manifest/mappings
-- MCP v2 read-only server over indexer
-- Solidity and The Graph development skills
-- GitHub Actions skeletons
+## Current validated baseline
 
-## Not yet validated
+`orbitas_main` now contains:
+- ParticipantPassport contract;
+- MultidimensionalObligation contract with `T=(R,Q,S)` protocol hooks;
+- BilateralExchange contract;
+- MultilateralClearing path contract;
+- Foundry unit tests and stateful obligation invariant test;
+- The Graph schema/manifest/mappings;
+- MCP read-only server over the indexer;
+- reproducible local/Codex sandbox;
+- manual-only GitHub Actions workflows;
+- manual external-server installation path.
 
-This environment did not have the project Foundry/npm dependencies installed and outbound package installation was unavailable, so a full compile/test run could not be completed here. A system `tsc` exists, but MCP/Subgraph package types are unavailable until dependencies are installed. CI is configured to perform compilation and tests once the repository is hosted with network-enabled GitHub Actions.
+The earlier bootstrap blockers in this file are obsolete: the GitHub repository exists, the bootstrap is merged, and the local sandbox has been exercised end-to-end.
 
-Before deployment:
+## Cross-repository state
 
-1. install pinned dependencies;
-2. run `forge fmt`, `forge build`, `forge test`;
-3. fix any ABI/codegen mismatches;
-4. regenerate ABI JSON from compiled contracts;
-5. fill deployment addresses/start blocks in the Subgraph manifest;
-6. run `graph codegen && graph build`;
-7. run security static analysis and invariant campaigns;
-8. perform external review before production funds/obligations.
+### orbitas-odoo
 
-## GitHub repository blocker
+Initial Odoo 19 connector MVP is merged. It includes:
+- Participant Passport binding;
+- invoice/vendor-bill normalization;
+- durable bindings and outbox;
+- webhook security/replay protection;
+- explicit clearing consent;
+- settlement-instruction UI;
+- multi-company isolation;
+- repository tests/static quality checks.
 
-The connected GitHub tool can create files/branches/issues in existing repositories, but does not expose repository-creation capability. `IOUnet/orbitas_main` did not exist when this bootstrap was prepared. Create the empty repository in the IOUnet organization (or enable a GitHub action that supports repository creation), then the prepared tree can be pushed immediately.
+Latest `main` Quality workflow is green.
 
+Still outstanding:
+- full Odoo 19 runtime/install validation;
+- binding to canonical Orbitas Gateway v1;
+- extended partial-payment/multicurrency/credit-note scenarios;
+- production accounting write-back.
 
-## Local git baseline
+### orbitas-1c
 
-The bootstrap is initialized as a local `main` Git repository. The initial implementation commit was created locally; it is ready to push once `IOUnet/orbitas_main` exists.
+Initial 1C:Enterprise MVP foundation is merged for a BP 3.0 reference adapter.
+
+Implemented source/design:
+- BSL common modules;
+- obligation normalization;
+- outbox/retry;
+- HTTP/JSON;
+- passport flow;
+- candidate-path/consent logic;
+- workspace/read-model;
+- metadata and test specifications.
+
+Still outstanding:
+- actual metadata/forms assembled into a compiled `.cfe`;
+- real 1C/EDT validation;
+- binding to canonical Orbitas Gateway v1;
+- production confirmed-settlement accounting reflection.
+
+## Current P0 gap
+
+There is still no canonical ERP-facing Gateway/API in `orbitas_main`.
+
+Both ERP repositories deliberately carry provisional/configurable API contracts. The next development milestone is therefore **Canonical Orbitas Gateway v1 + cross-repository E2E**, not more isolated connector features.
+
+See [ROADMAP.md](ROADMAP.md).
+
+## Deployment policy
+
+Build/test workflows in `orbitas_main` are manual-only. External-server deployment is also manual by command. No automatic deployment is assumed.
+
+## Production readiness
+
+Not production-ready yet.
+
+Before a real pilot:
+1. Gateway v1 and cross-repo E2E;
+2. real Odoo runtime validation;
+3. compiled/tested 1C extension for a pinned BP 3.0/platform version;
+4. smart-contract and Gateway security review;
+5. selected jurisdiction/accounting strategy;
+6. testnet/staging operational runbooks;
+7. external review before economically meaningful obligations or collateral are used.
