@@ -10,6 +10,8 @@ GRAPH_NODE_ADMIN="${GRAPH_NODE_ADMIN:-http://127.0.0.1:8020}"
 GRAPHQL_ENDPOINT="${GRAPHQL_ENDPOINT:-http://127.0.0.1:8000/subgraphs/name/orbitas/local}"
 IPFS_API="${IPFS_API:-http://127.0.0.1:5001}"
 MCP_URL="${MCP_URL:-http://127.0.0.1:3000/mcp}"
+GATEWAY_URL="${GATEWAY_URL:-http://127.0.0.1:3100}"
+ORBITAS_API_TOKEN="${ORBITAS_API_TOKEN:-orbitas-local-token}"
 
 # Anvil default account #0. LOCAL TESTING ONLY.
 ADMIN_PK="${ADMIN_PK:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}"
