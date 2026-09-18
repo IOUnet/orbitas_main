@@ -1,0 +1,44 @@
+name: gateway-validation-temporary
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'gateway/**'
+      - 'src/**'
+      - 'script/**'
+      - 'indexer/**'
+      - 'scripts/test-env/**'
+      - 'docker-compose.test.yml'
+      - 'Makefile'
+      - '.github/workflows/gateway-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  gateway-e2e:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: stable
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install host tools
+        run: sudo apt-get update && sudo apt-get install -y gettext-base jq
+      - name: Build complete Orbitas sandbox and cross-ERP E2E
+        run: make test-env
+      - name: Run protocol suite
+        run: make test-contracts
+      - name: Validate Gateway package
+        run: make test-gateway
+      - name: Dump service logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.test.yml logs --no-color --tail=400
+      - name: Stop sandbox
+        if: always()
+        run: bash scripts/test-env/down.sh -v || true
