@@ -125,6 +125,53 @@ paths:
         "200":
           description: canonical obligation state
 
+  /v1/obligations/{obligationId}/cancel:
+    post:
+      summary: Cancel the remaining active obligation after source cancellation
+      description: Economic quantity is never silently rewritten. The remaining residual is cancelled through the contract lifecycle and requires delegated issuer authority.
+      parameters:
+        - name: obligationId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: residual cancelled
+
+  /v1/obligations/{obligationId}/close:
+    post:
+      summary: Close an obligation discharged outside Orbitas
+      description: |
+        Closing never mutates quantity directly. The remaining on-chain residual is cancelled and
+        the external accounting/evidence trail remains in the ERP. Partial external discharge is
+        intentionally not modeled as an unsigned source-residual edit in Gateway v1.
+      parameters:
+        - name: obligationId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: residual closed/cancelled under explicit lifecycle rules
+
   /v1/clearing/discover:
     post:
       summary: Deterministically create an A→B→C candidate proposal
