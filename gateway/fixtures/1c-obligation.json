@@ -1,0 +1,36 @@
+{
+  "source": {
+    "system": "1c-enterprise",
+    "instance_id": "bp30-e2e",
+    "company_id": "organization-1",
+    "record_type": "ПоступлениеТоваровУслуг",
+    "record_id": "00000000-0000-0000-0000-000000009002",
+    "revision": "1"
+  },
+  "parties": {
+    "issuer_passport_id": "2",
+    "beneficiary_passport_id": "3"
+  },
+  "resource": {
+    "type": "MONETARY",
+    "code": "BRL",
+    "unit": "BRL",
+    "currency": "BRL",
+    "quantity": "80.00",
+    "decimals": 2,
+    "due_date": "2026-12-31T00:00:00Z"
+  },
+  "properties": {
+    "adapter": "1c-bp30",
+    "document_kind": "ПоступлениеТоваровУслуг"
+  },
+  "evidence": {
+    "ref": "1c://bp30-e2e/ПоступлениеТоваровУслуг/00000000-0000-0000-0000-000000009002"
+  },
+  "metadata": {
+    "document_number": "E2E-9002"
+  },
+  "quality_schema": {
+    "schema": "orbitas.quality.v1"
+  }
+}
