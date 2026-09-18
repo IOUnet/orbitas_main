@@ -5,8 +5,11 @@ import {Script} from "forge-std/Script.sol";
 import {ParticipantPassport} from "../src/ParticipantPassport.sol";
 import {MultidimensionalObligation} from "../src/MultidimensionalObligation.sol";
 
-/// @notice Seed deterministic local-only participants and obligations for Anvil/Graph/MCP smoke tests.
+/// @notice Seed deterministic local-only participants and obligations for Anvil/Graph/MCP/Gateway smoke tests.
 contract LocalSeed is Script {
+    uint256 private constant ISSUE_OBLIGATION = 1 << 0;
+    uint256 private constant UPDATE_OBLIGATION_METADATA = 1 << 1;
+
     function run() external {
         ParticipantPassport passports = ParticipantPassport(vm.envAddress("PASSPORT_ADDRESS"));
         MultidimensionalObligation obligations = MultidimensionalObligation(vm.envAddress("OBLIGATION_ADDRESS"));
@@ -14,10 +17,11 @@ contract LocalSeed is Script {
         uint256 alicePk = vm.envUint("ALICE_PK");
         uint256 bobPk = vm.envUint("BOB_PK");
         uint256 carolPk = vm.envUint("CAROL_PK");
+        address gatewayOperator = vm.envAddress("ORBITAS_ADMIN");
 
-        uint256 aliceId = _register(passports, alicePk, "Alice Manufacturing", "alice.example");
-        uint256 bobId = _register(passports, bobPk, "Bob Components", "bob.example");
-        uint256 carolId = _register(passports, carolPk, "Carol Logistics", "carol.example");
+        uint256 aliceId = _register(passports, alicePk, gatewayOperator, "Alice Manufacturing", "alice.example");
+        uint256 bobId = _register(passports, bobPk, gatewayOperator, "Bob Components", "bob.example");
+        uint256 carolId = _register(passports, carolPk, gatewayOperator, "Carol Logistics", "carol.example");
 
         _issueMoney(obligations, alicePk, aliceId, bobId, 100_00, "local:A-B:100");
         _issueMoney(obligations, bobPk, bobId, carolId, 80_00, "local:B-C:80");
@@ -25,13 +29,20 @@ contract LocalSeed is Script {
         _issueMoney(obligations, carolPk, carolId, aliceId, 25_00, "local:C-A:25");
     }
 
-    function _register(ParticipantPassport passports, uint256 pk, string memory company, string memory host)
-        private
-        returns (uint256 passportId)
-    {
+    function _register(
+        ParticipantPassport passports,
+        uint256 pk,
+        address gatewayOperator,
+        string memory company,
+        string memory host
+    ) private returns (uint256 passportId) {
         vm.startBroadcast(pk);
         passportId = passports.registerPassport(
             keccak256(abi.encode(company, host)), string.concat("ipfs://orbitas-local/passports/", host)
+        );
+        // Test-only delegation: the local Gateway relayer may publish and close ERP obligations for this Passport.
+        passports.setOperatorPermissions(
+            passportId, gatewayOperator, ISSUE_OBLIGATION | UPDATE_OBLIGATION_METADATA
         );
         vm.stopBroadcast();
     }

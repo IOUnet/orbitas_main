@@ -1,0 +1,494 @@
+openapi: 3.1.0
+info:
+  title: Orbitas Gateway API
+  version: 1.0.0
+  description: |
+    Canonical ERP-facing API for Orbitas. The Gateway is a relayer/orchestrator,
+    not an economic principal. Read projections may come from The Graph, but
+    every state-changing protocol operation is validated against canonical
+    smart-contract state.
+servers:
+  - url: http://127.0.0.1:3100
+    description: local disposable sandbox
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      security: []
+      responses:
+        "200":
+          description: service health
+
+  /v1/passports/prepare:
+    post:
+      summary: Prepare self-service Participant Passport registration calldata
+      description: Returns calldata for ParticipantPassport.registerPassport. The Gateway never receives the participant private key.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [company_name, website]
+              properties:
+                company_name: { type: string, minLength: 1 }
+                website: { type: string, format: uri }
+                metadata_uri: { type: string }
+      responses:
+        "200":
+          description: unsigned registration transaction intent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PassportPrepareResponse"
+
+  /v1/passports/link:
+    post:
+      summary: Link an ERP company identity to an existing active Passport
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passport_id, source]
+              properties:
+                passport_id: { type: string, pattern: "^[1-9][0-9]*$" }
+                source:
+                  $ref: "#/components/schemas/CompanySource"
+      responses:
+        "200":
+          description: linked company/passport
+
+  /v1/passports/{passportId}:
+    get:
+      security: []
+      parameters:
+        - name: passportId
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[1-9][0-9]*$" }
+      responses:
+        "200":
+          description: canonical Passport state
+
+  /v1/obligations:
+    post:
+      summary: Publish an ERP-backed obligation idempotently
+      description: |
+        The Gateway relayer must already have ISSUE_OBLIGATION operator permission
+        from the issuer Passport. The ERP never sends a private key.
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ObligationPublishRequest"
+      responses:
+        "201":
+          description: obligation created
+        "200":
+          description: existing obligation returned for the same sourceRef or Idempotency-Key
+    get:
+      security: []
+      summary: List incoming or outgoing indexed obligations
+      parameters:
+        - name: passport_id
+          in: query
+          required: true
+          schema: { type: string }
+        - name: direction
+          in: query
+          required: true
+          schema: { type: string, enum: [incoming, outgoing] }
+      responses:
+        "200":
+          description: The Graph read projection
+
+  /v1/obligations/{obligationId}:
+    get:
+      security: []
+      description: Reads canonical obligation/available quantity from the smart contract.
+      parameters:
+        - name: obligationId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: canonical obligation state
+
+  /v1/obligations/{obligationId}/cancel:
+    post:
+      summary: Cancel the remaining active obligation after source cancellation
+      description: Economic quantity is never silently rewritten. The remaining residual is cancelled through the contract lifecycle and requires delegated issuer authority.
+      parameters:
+        - name: obligationId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: residual cancelled
+
+  /v1/obligations/{obligationId}/close:
+    post:
+      summary: Close an obligation discharged outside Orbitas
+      description: |
+        Closing never mutates quantity directly. The remaining on-chain residual is cancelled and
+        the external accounting/evidence trail remains in the ERP. Partial external discharge is
+        intentionally not modeled as an unsigned source-residual edit in Gateway v1.
+      parameters:
+        - name: obligationId
+          in: path
+          required: true
+          schema: { type: string }
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        "200":
+          description: residual closed/cancelled under explicit lifecycle rules
+
+  /v1/clearing/discover:
+    post:
+      summary: Deterministically create an A→B→C candidate proposal
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [incoming_obligation_id, outgoing_obligation_id]
+              properties:
+                incoming_obligation_id: { type: string }
+                outgoing_obligation_id: { type: string }
+                max_quantity_base_units: { type: string }
+                expires_in_seconds: { type: integer, minimum: 60, maximum: 3600 }
+      responses:
+        "201":
+          description: candidate proposal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClearingProposal"
+
+  /v1/proposals/{proposalId}:
+    get:
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+      responses:
+        "200":
+          description: proposal and collected approvals
+
+  /v1/proposals/{proposalId}/approve:
+    post:
+      summary: Submit one participant's signature over the on-chain pathDigest
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passport_id, signature]
+              properties:
+                passport_id: { type: string }
+                signature: { type: string, pattern: "^0x[0-9a-fA-F]+$" }
+      responses:
+        "200":
+          description: approval accepted
+
+  /v1/proposals/{proposalId}/reject:
+    post:
+      summary: Explicitly reject a proposal
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [passport_id]
+              properties:
+                passport_id: { type: string }
+                reason: { type: string }
+      responses:
+        "200":
+          description: rejected
+
+  /v1/proposals/{proposalId}/execute:
+    post:
+      summary: Revalidate and create the on-chain redirect settlement instruction
+      parameters:
+        - $ref: "#/components/parameters/ProposalId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      responses:
+        "201":
+          description: settlement instruction created
+
+  /v1/settlements/{settlementId}:
+    get:
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/SettlementId"
+      responses:
+        "200":
+          description: canonical on-chain settlement instruction
+
+  /v1/settlements/{settlementId}/prepare-confirmation:
+    post:
+      summary: Return the canonical confirmationDigest that intermediary and receiver must sign
+      parameters:
+        - $ref: "#/components/parameters/SettlementId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fulfillment_evidence: {}
+                fulfillment_evidence_hash:
+                  type: string
+                  pattern: "^0x[0-9a-fA-F]{64}$"
+                deadline:
+                  oneOf:
+                    - { type: string, format: date-time }
+                    - { type: string, pattern: "^[0-9]+$" }
+      responses:
+        "200":
+          description: confirmation digest
+
+  /v1/settlements/{settlementId}/confirm:
+    post:
+      summary: Confirm redirect fulfillment and settle the two locked source tranches
+      parameters:
+        - $ref: "#/components/parameters/SettlementId"
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - fulfillment_evidence_hash
+                - deadline
+                - intermediary_signature
+                - receiver_signature
+              properties:
+                fulfillment_evidence_hash:
+                  type: string
+                  pattern: "^0x[0-9a-fA-F]{64}$"
+                deadline: { type: string }
+                intermediary_signature: { type: string }
+                receiver_signature: { type: string }
+      responses:
+        "200":
+          description: settlement finalized
+
+  /v1/webhooks/subscriptions:
+    post:
+      summary: Register a participant-scoped ERP webhook subscription
+      parameters:
+        - $ref: "#/components/parameters/IdempotencyKey"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [source_system, participant_id, callback_url, secret]
+              properties:
+                id: { type: string }
+                source_system: { type: string, enum: [odoo, 1c-enterprise, quickbooks, other] }
+                participant_id: { type: string }
+                callback_url: { type: string, format: uri }
+                secret: { type: string, minLength: 8 }
+      responses:
+        "201":
+          description: subscription stored
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, minLength: 8, maxLength: 200 }
+      description: Stable key for one logical ERP action. Reuse with another operation is rejected.
+    ProposalId:
+      name: proposalId
+      in: path
+      required: true
+      schema: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+    SettlementId:
+      name: settlementId
+      in: path
+      required: true
+      schema: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+
+  schemas:
+    CompanySource:
+      type: object
+      required: [system, instance_id, company_id]
+      properties:
+        system: { type: string }
+        instance_id: { type: string }
+        company_id: { type: string }
+
+    ERPSource:
+      type: object
+      required: [system, instance_id, company_id, record_type, record_id, revision]
+      properties:
+        system: { type: string, examples: [odoo, 1c-enterprise] }
+        instance_id: { type: string }
+        company_id: { type: string }
+        record_type: { type: string }
+        record_id: { type: string }
+        revision: { type: string }
+
+    ObligationParties:
+      type: object
+      required: [issuer_passport_id]
+      properties:
+        issuer_passport_id: { type: string }
+        beneficiary_passport_id: { type: string }
+        external_counterparty_ref: { type: string }
+
+    Resource:
+      type: object
+      required: [type, code, unit, quantity, decimals, due_date]
+      properties:
+        type: { type: string, enum: [MONETARY, GOODS, SERVICE] }
+        code: { type: string, maxLength: 32 }
+        unit: { type: string, maxLength: 32 }
+        currency: { type: string, maxLength: 32 }
+        quantity:
+          type: string
+          description: Decimal text in the resource's native unit; never IEEE floating point.
+        decimals: { type: integer, minimum: 0, maximum: 18 }
+        due_date:
+          oneOf:
+            - { type: string, format: date-time }
+            - { type: string, pattern: "^[0-9]+$" }
+
+    ObligationPublishRequest:
+      type: object
+      required: [source, parties, resource, evidence]
+      properties:
+        source:
+          $ref: "#/components/schemas/ERPSource"
+        parties:
+          $ref: "#/components/schemas/ObligationParties"
+        resource:
+          $ref: "#/components/schemas/Resource"
+        properties: { type: object, additionalProperties: true }
+        properties_hash: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+        properties_uri: { type: string }
+        evidence:
+          type: object
+          properties:
+            hash: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+            ref: { type: string }
+        metadata: { type: object, additionalProperties: true }
+        metadata_hash: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+        metadata_uri: { type: string }
+        quality_schema: { type: object, additionalProperties: true }
+        quality_schema_hash: { type: string, pattern: "^0x[0-9a-fA-F]{64}$" }
+
+    PassportPrepareResponse:
+      type: object
+      required: [chain_id, to, data, metadata_hash, metadata_uri, verification_level]
+      properties:
+        chain_id: { type: integer }
+        to: { type: string }
+        data: { type: string }
+        metadata_hash: { type: string }
+        metadata_uri: { type: string }
+        verification_level: { type: string, const: SELF_DECLARED }
+
+    ClearingProposal:
+      type: object
+      required: [id, state, path, matched_quantity_base_units, decimals, expires_at, salt, path_digest, required_approvals]
+      properties:
+        id: { type: string }
+        state: { type: string, enum: [CANDIDATE, AWAITING_APPROVALS, APPROVED, REJECTED, EXECUTED] }
+        path:
+          type: object
+          required:
+            - payer_passport_id
+            - intermediary_passport_id
+            - receiver_passport_id
+            - incoming_obligation_id
+            - outgoing_obligation_id
+          properties:
+            payer_passport_id: { type: string }
+            intermediary_passport_id: { type: string }
+            receiver_passport_id: { type: string }
+            incoming_obligation_id: { type: string }
+            outgoing_obligation_id: { type: string }
+        matched_quantity_base_units: { type: string }
+        decimals: { type: integer }
+        expires_at: { type: string }
+        salt: { type: string }
+        path_digest: { type: string }
+        required_approvals:
+          type: array
+          items: { type: string }
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          required: [code, message, request_id]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            request_id: { type: string }
+            details: {}
+
+x-orbitas-webhooks:
+  signature: "hex(hmac_sha256(secret, timestamp + '.' + raw_body))"
+  headers:
+    - X-Orbitas-Event-Id
+    - X-Orbitas-Timestamp
+    - X-Orbitas-Signature
+  events:
+    - clearing.proposal.upsert
+    - settlement.instruction.upsert
+    - settlement.settled

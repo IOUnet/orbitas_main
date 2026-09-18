@@ -1,0 +1,36 @@
+{
+  "source": {
+    "system": "odoo",
+    "instance_id": "odoo-e2e",
+    "company_id": "1",
+    "record_type": "account.move",
+    "record_id": "9001",
+    "revision": "1"
+  },
+  "parties": {
+    "issuer_passport_id": "1",
+    "beneficiary_passport_id": "2"
+  },
+  "resource": {
+    "type": "MONETARY",
+    "code": "BRL",
+    "unit": "BRL",
+    "currency": "BRL",
+    "quantity": "100.00",
+    "decimals": 2,
+    "due_date": "2026-12-31T00:00:00Z"
+  },
+  "properties": {
+    "adapter": "odoo-19",
+    "document_kind": "vendor_bill"
+  },
+  "evidence": {
+    "ref": "odoo://odoo-e2e/account.move/9001"
+  },
+  "metadata": {
+    "document_number": "BILL/E2E/9001"
+  },
+  "quality_schema": {
+    "schema": "orbitas.quality.v1"
+  }
+}

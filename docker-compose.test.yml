@@ -101,6 +101,63 @@ services:
     ports:
       - "${ORBITAS_BIND_HOST:-127.0.0.1}:3000:3000"
 
+  odoo-fixture:
+    image: node:22-alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:ro
+    environment:
+      PORT: "4101"
+      SOURCE_SYSTEM: odoo
+      WEBHOOK_SECRET: odoo-local-secret
+    command: ["node", "gateway/test/fixture-sink.mjs"]
+    ports:
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:4101:4101"
+
+  one-c-fixture:
+    image: node:22-alpine
+    working_dir: /workspace
+    volumes:
+      - ./:/workspace:ro
+    environment:
+      PORT: "4102"
+      SOURCE_SYSTEM: 1c-enterprise
+      WEBHOOK_SECRET: 1c-local-secret
+    command: ["node", "gateway/test/fixture-sink.mjs"]
+    ports:
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:4102:4102"
+
+  gateway:
+    image: node:22-bookworm-slim
+    depends_on:
+      anvil:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      graph-node:
+        condition: service_started
+      odoo-fixture:
+        condition: service_started
+      one-c-fixture:
+        condition: service_started
+    working_dir: /tmp/gateway
+    volumes:
+      - ./:/workspace:ro
+    environment:
+      PORT: "3100"
+      ORBITAS_API_TOKEN: orbitas-local-token
+      DATABASE_URL: postgresql://graph-node:let-me-in@postgres:5432/graph-node
+      RPC_URL: http://anvil:8545
+      GRAPHQL_ENDPOINT: http://graph-node:8000/subgraphs/name/orbitas/local
+      CHAIN_ID: "31337"
+      PASSPORT_ADDRESS: ${PASSPORT_ADDRESS}
+      OBLIGATION_ADDRESS: ${OBLIGATION_ADDRESS}
+      MULTILATERAL_ADDRESS: ${MULTILATERAL_ADDRESS}
+      RELAYER_PRIVATE_KEY: ${GATEWAY_RELAYER_PK:-0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80}
+    command: ["sh", "-lc", "cp -R /workspace/gateway/. /tmp/gateway/ && npm install --no-audit --no-fund && npm run check && npm test && npm run start"]
+    ports:
+      - "${ORBITAS_BIND_HOST:-127.0.0.1}:3100:3100"
+
 volumes:
   orbitas_graph_postgres:
   orbitas_ipfs:

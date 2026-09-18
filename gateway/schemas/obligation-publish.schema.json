@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orbitas.net/schemas/v1/obligation-publish.schema.json",
+  "title": "Orbitas Gateway v1 ObligationPublishRequest",
+  "type": "object",
+  "required": ["source", "parties", "resource", "evidence"],
+  "additionalProperties": false,
+  "properties": {
+    "source": {
+      "type": "object",
+      "required": ["system", "instance_id", "company_id", "record_type", "record_id", "revision"],
+      "additionalProperties": false,
+      "properties": {
+        "system": { "type": "string", "minLength": 1 },
+        "instance_id": { "type": "string", "minLength": 1 },
+        "company_id": { "type": "string", "minLength": 1 },
+        "record_type": { "type": "string", "minLength": 1 },
+        "record_id": { "type": "string", "minLength": 1 },
+        "revision": { "type": "string", "minLength": 1 }
+      }
+    },
+    "parties": {
+      "type": "object",
+      "required": ["issuer_passport_id"],
+      "properties": {
+        "issuer_passport_id": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "beneficiary_passport_id": { "type": "string", "pattern": "^[1-9][0-9]*$" },
+        "external_counterparty_ref": { "type": "string", "minLength": 1 }
+      },
+      "oneOf": [
+        { "required": ["beneficiary_passport_id"] },
+        { "required": ["external_counterparty_ref"] }
+      ]
+    },
+    "resource": {
+      "type": "object",
+      "required": ["type", "code", "unit", "quantity", "decimals", "due_date"],
+      "properties": {
+        "type": { "enum": ["MONETARY", "GOODS", "SERVICE"] },
+        "code": { "type": "string", "maxLength": 32 },
+        "unit": { "type": "string", "maxLength": 32 },
+        "currency": { "type": "string", "maxLength": 32 },
+        "quantity": { "type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+        "decimals": { "type": "integer", "minimum": 0, "maximum": 18 },
+        "due_date": {
+          "oneOf": [
+            { "type": "string", "format": "date-time" },
+            { "type": "string", "pattern": "^[0-9]+$" }
+          ]
+        }
+      }
+    },
+    "properties": { "type": "object" },
+    "properties_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" },
+    "properties_uri": { "type": "string" },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" },
+        "ref": { "type": "string" }
+      }
+    },
+    "metadata": { "type": "object" },
+    "metadata_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" },
+    "metadata_uri": { "type": "string" },
+    "quality_schema": { "type": "object" },
+    "quality_schema_hash": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" }
+  }
+}

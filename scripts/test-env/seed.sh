@@ -21,7 +21,7 @@ ALICE_ADDRESS="$(fund_key "$ALICE_PK")"
 BOB_ADDRESS="$(fund_key "$BOB_PK")"
 CAROL_ADDRESS="$(fund_key "$CAROL_PK")"
 
-export PASSPORT_ADDRESS OBLIGATION_ADDRESS ALICE_PK BOB_PK CAROL_PK
+export PASSPORT_ADDRESS OBLIGATION_ADDRESS ALICE_PK BOB_PK CAROL_PK ORBITAS_ADMIN
 forge script script/LocalSeed.s.sol:LocalSeed \
   --rpc-url "$RPC_URL" \
   --broadcast
