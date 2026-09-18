@@ -1,12 +1,13 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: test-env test-env-up test-env-down test-env-reset deploy-local seed-local deploy-subgraph smoke test-contracts test-indexer test-mcp logs
+.PHONY: test-env test-env-up test-env-down test-env-reset deploy-local seed-local deploy-subgraph gateway-up gateway-e2e smoke test-contracts test-indexer test-mcp test-gateway logs
 
-test-env: test-env-reset test-env-up deploy-local seed-local deploy-subgraph smoke
+test-env: test-env-reset test-env-up deploy-local seed-local deploy-subgraph gateway-up smoke gateway-e2e
 	@echo "Orbitas local test environment is ready."
 	@echo "Anvil:   http://127.0.0.1:8545"
 	@echo "GraphQL: http://127.0.0.1:8000/subgraphs/name/orbitas/local"
 	@echo "MCP:     http://127.0.0.1:3000/mcp"
+	@echo "Gateway: http://127.0.0.1:3100"
 
 test-env-up:
 	bash scripts/test-env/up.sh
@@ -27,6 +28,12 @@ seed-local:
 deploy-subgraph:
 	bash scripts/test-env/deploy-subgraph.sh
 
+gateway-up:
+	bash scripts/test-env/gateway-up.sh
+
+gateway-e2e:
+	bash scripts/test-env/gateway-e2e.sh
+
 smoke:
 	bash scripts/test-env/smoke.sh
 
@@ -38,6 +45,9 @@ test-indexer:
 
 test-mcp:
 	cd indexer/mcp && npm install --no-audit --no-fund && npm run build
+
+test-gateway:
+	cd gateway && npm install --no-audit --no-fund && npm run check && npm test
 
 logs:
 	docker compose -f docker-compose.test.yml logs -f --tail=200
