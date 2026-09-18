@@ -234,6 +234,27 @@ export class OrbitasProtocol {
     };
   }
 
+  async cancelResidual(obligationId) {
+    const id = BigInt(obligationId);
+    const current = await this.getObligation(id);
+    if (Number(current.status) === 3) {
+      return { obligation_id: id.toString(), state: "CANCELLED", reused: true, tx_hash: null };
+    }
+    if (Number(current.status) !== 1) {
+      throw new GatewayError("OBLIGATION_NOT_ACTIVE", "only an active obligation residual can be cancelled/closed", 409);
+    }
+    const simulation = await this.publicClient.simulateContract({
+      address: this.config.obligationAddress,
+      abi: obligationAbi,
+      functionName: "cancelResidual",
+      args: [id],
+      account: this.account
+    });
+    const txHash = await this.walletClient.writeContract(simulation.request);
+    await this.publicClient.waitForTransactionReceipt({ hash: txHash });
+    return { obligation_id: id.toString(), state: "CANCELLED", reused: false, tx_hash: txHash };
+  }
+
   async listIndexedObligations(passportId, direction) {
     const id = String(BigInt(passportId));
     const field = direction === "incoming" ? "beneficiaryPassportId" : direction === "outgoing" ? "issuerPassportId" : null;
