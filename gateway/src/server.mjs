@@ -148,6 +148,24 @@ async function handle(req, res) {
     return json(res, result.status, { ...result.body, idempotency_replayed: result.replayed });
   }
 
+  const obligationLifecycleMatch = url.pathname.match(/^\/v1\/obligations\/(\d+)\/(cancel|close)$/);
+  if (obligationLifecycleMatch) {
+    const obligationId = obligationLifecycleMatch[1];
+    const action = obligationLifecycleMatch[2];
+    const result = await idempotent(req, `obligation.${action}`, async () => {
+      const before = await protocol.getObligation(obligationId);
+      const changed = await protocol.cancelResidual(obligationId);
+      const eventType = action === "close" ? "obligation.closed" : "obligation.cancelled";
+      await webhooks.emit(
+        eventType,
+        [before.issuer_passport_id, before.beneficiary_passport_id].filter((id) => String(id) !== "0"),
+        { ...changed, reason: body.reason ?? null }
+      );
+      return { status: 200, body: { ...changed, lifecycle_action: action } };
+    });
+    return json(res, result.status, { ...result.body, idempotency_replayed: result.replayed });
+  }
+
   if (url.pathname === "/v1/clearing/discover") {
     const result = await idempotent(req, "clearing.discover", async () => {
       const proposal = await protocol.discoverPath(body);
